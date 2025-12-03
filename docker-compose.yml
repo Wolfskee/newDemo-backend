@@ -1,0 +1,25 @@
+services:
+  dev-db:
+    image: postgres:16
+    ports:
+      - 5434:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: nest
+    networks:
+      - new-demo-backend-network
+
+  test-db:
+    image: postgres:16
+    ports:
+      - 5435:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: nest_test
+    networks:
+      - new-demo-backend-network
+
+networks:
+  new-demo-backend-network:
