@@ -1,8 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// ---------------------------
+// Prisma Database Schema
+// ---------------------------
 
 generator client {
   provider = "prisma-client"
@@ -12,4 +10,82 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ---------------------------
+// User Roles Enum
+// ---------------------------
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+  CUSTOMER
+}
+
+// ---------------------------
+// Status Enums
+// ---------------------------
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum ItemStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// ---------------------------
+// User
+// ---------------------------
+model User {
+  id        String        @id @default(uuid())
+  username  String
+  email     String        @unique
+  password  String
+  role      UserRole      @default(CUSTOMER)
+  phone     String?       
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relations
+  appointmentsAsCustomer Appointment[] @relation("CustomerAppointments")
+  appointmentsAsEmployee Appointment[] @relation("EmployeeAppointments")
+}
+
+// ---------------------------
+// Appointment
+// ---------------------------
+model Appointment {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime    // date + time
+  status                  AppointmentStatus @default(PENDING)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  customerId  String
+  employeeId  String?
+
+  customer    User        @relation("CustomerAppointments", fields: [customerId], references: [id])
+  employee    User?       @relation("EmployeeAppointments", fields: [employeeId], references: [id])
+}
+
+// ---------------------------
+// Item (Service / Product / Category Item)
+// ---------------------------
+model Item {
+  id        String     @id @default(uuid())
+  name      String
+  description String?
+  price     Float
+  duration  Int         // in minutes
+  category  String
+  status                ItemStatus @default(ACTIVE)
+  imageUrl  String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
