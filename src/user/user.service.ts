@@ -6,13 +6,20 @@ import {
 import { hash } from 'bcrypt';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { CreateUserDto, UpdateUserDto } from './dto/user-input.dto';
+import {
+  UserResponseDto,
+  PaginatedUserResponseDto,
+} from './dto/user-response.dto';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllUsers(page: number, limit: number) {
+  async getAllUsers(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedUserResponseDto> {
     const skip = (page - 1) * limit;
 
     const total = await this.prisma.user.count();
@@ -35,7 +42,7 @@ export class UserService {
     };
   }
 
-  async getUserById(id: string) {
+  async getUserById(id: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id },
       omit: {
@@ -55,7 +62,7 @@ export class UserService {
     return user;
   }
 
-  async createUser(data: CreateUserDto) {
+  async createUser(data: CreateUserDto): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -75,7 +82,7 @@ export class UserService {
     return userWithoutPassword;
   }
 
-  async updateUser(id: string, data: UpdateUserDto) {
+  async updateUser(id: string, data: UpdateUserDto): Promise<UserResponseDto> {
     // Will throw NotFoundException if user does not exist
     const user = await this.getUserById(id);
 
@@ -104,7 +111,7 @@ export class UserService {
     return userWithoutPassword;
   }
 
-  async deleteUser(id: string) {
+  async deleteUser(id: string): Promise<UserResponseDto> {
     // Will throw NotFoundException if user does not exist
     await this.getUserById(id);
 

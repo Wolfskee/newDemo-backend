@@ -49,8 +49,8 @@ model User {
   updatedAt DateTime      @updatedAt
 
   // Relations
-  appointmentsAsCustomer Appointment[] @relation("CustomerAppointments")
-  appointmentsAsEmployee Appointment[] @relation("EmployeeAppointments")
+  appointmentsAsCustomer  Appointment[] @relation("CustomerAppointments")
+  appointmentsAsEmployee  Appointment[] @relation("EmployeeAppointments")
 }
 
 // ---------------------------
@@ -78,14 +78,14 @@ model Appointment {
 // Item (Service / Product / Category Item)
 // ---------------------------
 model Item {
-  id        String     @id @default(uuid())
-  name      String
+  id          String      @id @default(uuid())
+  name        String
   description String?
-  price     Float
-  duration  Int         // in minutes
-  category  String
-  status                ItemStatus @default(ACTIVE)
-  imageUrl  String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  price       Float
+  duration    Int?        // in minutes
+  category    String
+  status                  ItemStatus @default(ACTIVE)
+  imageUrl    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }

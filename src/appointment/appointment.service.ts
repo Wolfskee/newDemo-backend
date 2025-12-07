@@ -1,12 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserService } from 'src/user/user.service';
 import { UserRole } from '../generated/prisma/client';
-
 import {
   CreateAppointmentDto,
   UpdateAppointmentDto,
-} from './dto/appointment.dto';
-import { UserService } from 'src/user/user.service';
+} from './dto/appointment-input.dto';
+import {
+  AppointmentResponseDto,
+  PaginatedAppointmentResponseDto,
+} from './dto/appointment-response.dto';
 
 @Injectable()
 export class AppointmentService {
@@ -15,7 +18,10 @@ export class AppointmentService {
     private userService: UserService,
   ) {}
 
-  async getAllAppointments(page: number, limit: number) {
+  async getAllAppointments(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedAppointmentResponseDto> {
     const skip = (page - 1) * limit;
 
     const total = await this.prisma.appointment.count();
@@ -37,7 +43,7 @@ export class AppointmentService {
     };
   }
 
-  async getAppointmentById(id: string) {
+  async getAppointmentById(id: string): Promise<AppointmentResponseDto> {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id },
     });
@@ -48,7 +54,9 @@ export class AppointmentService {
     return appointment;
   }
 
-  async createAppointment(data: CreateAppointmentDto) {
+  async createAppointment(
+    data: CreateAppointmentDto,
+  ): Promise<AppointmentResponseDto> {
     // check if customer exists
     const customer = await this.userService.getUserById(data.customerId);
 
@@ -69,7 +77,10 @@ export class AppointmentService {
     return newAppointment;
   }
 
-  async updateAppointment(id: string, data: UpdateAppointmentDto) {
+  async updateAppointment(
+    id: string,
+    data: UpdateAppointmentDto,
+  ): Promise<AppointmentResponseDto> {
     // Will throw NotFoundException if appointment does not exist
     await this.getAppointmentById(id);
 
@@ -97,7 +108,7 @@ export class AppointmentService {
     return updatedAppointment;
   }
 
-  async deleteAppointment(id: string) {
+  async deleteAppointment(id: string): Promise<AppointmentResponseDto> {
     // Will throw NotFoundException if appointment does not exist
     await this.getAppointmentById(id);
 

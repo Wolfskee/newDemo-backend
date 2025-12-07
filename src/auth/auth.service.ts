@@ -3,7 +3,7 @@ import { compare } from 'bcrypt';
 
 import { UserService } from 'src/user/user.service';
 import { LoginDto } from './dto/auth.dto';
-import { CreateUserDto } from 'src/user/dto/user.dto';
+import { CreateUserDto } from 'src/user/dto/user-input.dto';
 
 @Injectable()
 export class AuthService {

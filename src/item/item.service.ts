@@ -1,12 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateItemDto, UpdateItemDto } from './dto/item.dto';
+import { CreateItemDto, UpdateItemDto } from './dto/item-input.dto';
+import {
+  ItemResponseDto,
+  PaginatedItemResponseDto,
+} from './dto/item-response.dto';
 
 @Injectable()
 export class ItemService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllItems(page: number, limit: number) {
+  async getAllItems(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedItemResponseDto> {
     const skip = (page - 1) * limit;
 
     const total = await this.prisma.item.count();
@@ -28,7 +35,7 @@ export class ItemService {
     };
   }
 
-  async getItemById(id: string) {
+  async getItemById(id: string): Promise<ItemResponseDto> {
     const item = await this.prisma.item.findUnique({
       where: { id },
     });
@@ -38,7 +45,7 @@ export class ItemService {
     return item;
   }
 
-  async createItem(data: CreateItemDto) {
+  async createItem(data: CreateItemDto): Promise<ItemResponseDto> {
     const newItem = await this.prisma.item.create({
       data,
     });
@@ -46,7 +53,7 @@ export class ItemService {
     return newItem;
   }
 
-  async updateItem(id: string, data: UpdateItemDto) {
+  async updateItem(id: string, data: UpdateItemDto): Promise<ItemResponseDto> {
     // Will throw NotFoundException if item does not exist
     await this.getItemById(id);
 
@@ -58,7 +65,7 @@ export class ItemService {
     return updatedItem;
   }
 
-  async deleteItem(id: string) {
+  async deleteItem(id: string): Promise<ItemResponseDto> {
     // Will throw NotFoundException if item does not exist
     await this.getItemById(id);
 
