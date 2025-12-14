@@ -27,7 +27,7 @@ export class UserService {
     const users = await this.prisma.user.findMany({
       skip,
       take: limit,
-      omit: { password: true },
+      omit: { password: true, refreshToken: true },
     });
 
     const totalPages = Math.ceil(total / limit);
@@ -47,18 +47,12 @@ export class UserService {
       where: { id },
       omit: {
         password: true,
+        refreshToken: true,
       },
     });
 
     if (!user) throw new NotFoundException(`User with ID ${id} not found`);
 
-    return user;
-  }
-
-  async findUserForAuth(email: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
     return user;
   }
 
@@ -77,9 +71,9 @@ export class UserService {
       },
     });
 
-    const { password, ...userWithoutPassword } = newUser;
+    const { password, refreshToken, ...response } = newUser;
 
-    return userWithoutPassword;
+    return response;
   }
 
   async updateUser(id: string, data: UpdateUserDto): Promise<UserResponseDto> {
@@ -107,8 +101,8 @@ export class UserService {
       data: updatedData,
     });
 
-    const { password, ...userWithoutPassword } = updatedUser;
-    return userWithoutPassword;
+    const { password, refreshToken, ...response } = updatedUser;
+    return response;
   }
 
   async deleteUser(id: string): Promise<UserResponseDto> {
@@ -117,9 +111,51 @@ export class UserService {
 
     const deletedUser = await this.prisma.user.delete({
       where: { id },
-      omit: { password: true },
+      omit: { password: true, refreshToken: true },
     });
 
     return deletedUser;
+  }
+
+  async findUserByEmailForAuth(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    return user;
+  }
+
+  async findUserByIdForAuth(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    return user;
+  }
+
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refreshToken: await hash(refreshToken, 10),
+      },
+    });
+  }
+
+  async deleteRefreshToken(userId: string): Promise<void> {
+    await this.prisma.user.updateMany({
+      where: {
+        id: userId,
+        refreshToken: {
+          not: null,
+        },
+      },
+      data: {
+        refreshToken: null,
+      },
+    });
   }
 }
