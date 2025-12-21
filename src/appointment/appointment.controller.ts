@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -49,8 +50,8 @@ export class AppointmentController {
     description: 'List of appointments with pagination metadata.',
   })
   async getAllAppointments(
-    @Query('page') page = 1,
-    @Query('limit') limit = 10,
+    @Query('page', new ParseIntPipe()) page: number = 1,
+    @Query('limit', new ParseIntPipe()) limit: number = 10,
   ): Promise<PaginatedAppointmentResponseDto> {
     return this.appointmentService.getAllAppointments(
       Number(page),
@@ -74,6 +75,41 @@ export class AppointmentController {
     @Param('id') id: string,
   ): Promise<AppointmentResponseDto> {
     return this.appointmentService.getAppointmentById(id);
+  }
+
+  @Get('user/:userId')
+  @ApiOperation({
+    summary: 'Get appointments by user',
+    description:
+      'Get all appointments where the user is either the customer or the employee.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'ID of the user (customer or employee)',
+    example: 'e9a3f4c1-5f72-4a5e-9c9b-123456789abc',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (starts from 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of items per page',
+    example: 10,
+  })
+  @ApiOkResponse({
+    description: 'Paginated list of appointments.',
+    type: PaginatedAppointmentResponseDto,
+  })
+  async getAppointmentsByUser(
+    @Param('userId') userId: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<PaginatedAppointmentResponseDto> {
+    return this.appointmentService.getAppointmentsByUser(userId, page, limit);
   }
 
   @Post()

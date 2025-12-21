@@ -54,6 +54,40 @@ export class AppointmentService {
     return appointment;
   }
 
+  async getAppointmentsByUser(
+    userId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedAppointmentResponseDto> {
+    const skip = (page - 1) * limit;
+
+    const total = await this.prisma.appointment.count({
+      where: {
+        OR: [{ customerId: userId }, { employeeId: userId }],
+      },
+    });
+
+    const appointments = await this.prisma.appointment.findMany({
+      skip,
+      take: limit,
+      where: {
+        OR: [{ customerId: userId }, { employeeId: userId }],
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      appointments,
+      total,
+      totalPages,
+      currentPage: page,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
+  }
+
   async createAppointment(
     data: CreateAppointmentDto,
   ): Promise<AppointmentResponseDto> {
