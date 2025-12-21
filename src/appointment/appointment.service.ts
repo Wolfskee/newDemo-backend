@@ -56,36 +56,22 @@ export class AppointmentService {
 
   async getAppointmentsByUser(
     userId: string,
-    page: number,
-    limit: number,
-  ): Promise<PaginatedAppointmentResponseDto> {
-    const skip = (page - 1) * limit;
+    startDate?: Date,
+  ): Promise<AppointmentResponseDto[]> {
+    const whereClause: any = {
+      OR: [{ customerId: userId }, { employeeId: userId }],
+    };
 
-    const total = await this.prisma.appointment.count({
-      where: {
-        OR: [{ customerId: userId }, { employeeId: userId }],
-      },
-    });
+    if (startDate) {
+      whereClause.date = { gte: startDate };
+    }
 
     const appointments = await this.prisma.appointment.findMany({
-      skip,
-      take: limit,
-      where: {
-        OR: [{ customerId: userId }, { employeeId: userId }],
-      },
+      where: whereClause,
       orderBy: { date: 'desc' },
     });
 
-    const totalPages = Math.ceil(total / limit);
-
-    return {
-      appointments,
-      total,
-      totalPages,
-      currentPage: page,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    };
+    return appointments;
   }
 
   async createAppointment(

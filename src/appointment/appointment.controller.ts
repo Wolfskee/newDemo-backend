@@ -81,7 +81,7 @@ export class AppointmentController {
   @ApiOperation({
     summary: 'Get appointments by user',
     description:
-      'Get all appointments where the user is either the customer or the employee.',
+      'Get all appointments where the user is either the customer or the employee. Optionally filter by date.',
   })
   @ApiParam({
     name: 'userId',
@@ -89,27 +89,22 @@ export class AppointmentController {
     example: 'e9a3f4c1-5f72-4a5e-9c9b-123456789abc',
   })
   @ApiQuery({
-    name: 'page',
+    name: 'date',
     required: false,
-    description: 'Page number (starts from 1)',
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    description: 'Number of items per page',
-    example: 10,
+    description:
+      'Filter to get appointments on or after this date (YYYY-MM-DD)',
+    example: '2025-12-20',
   })
   @ApiOkResponse({
-    description: 'Paginated list of appointments.',
-    type: PaginatedAppointmentResponseDto,
+    description: 'List of appointments (optionally filtered by date).',
+    type: [AppointmentResponseDto],
   })
   async getAppointmentsByUser(
     @Param('userId') userId: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-  ): Promise<PaginatedAppointmentResponseDto> {
-    return this.appointmentService.getAppointmentsByUser(userId, page, limit);
+    @Query('date') date?: string,
+  ): Promise<AppointmentResponseDto[]> {
+    const parsedDate = date ? new Date(date) : undefined;
+    return this.appointmentService.getAppointmentsByUser(userId, parsedDate);
   }
 
   @Post()
