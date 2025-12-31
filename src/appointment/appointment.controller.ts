@@ -26,11 +26,13 @@ import {
   AppointmentResponseDto,
   PaginatedAppointmentResponseDto,
 } from './dto/appointment-response.dto';
+import { Public } from 'src/common/decorators';
 
 @Controller('appointment')
 export class AppointmentController {
   constructor(private appointmentService: AppointmentService) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all appointments with pagination' })
   @ApiQuery({
@@ -59,6 +61,7 @@ export class AppointmentController {
     );
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get a single appointment by ID' })
   @ApiParam({
@@ -77,6 +80,7 @@ export class AppointmentController {
     return this.appointmentService.getAppointmentById(id);
   }
 
+  @Public()
   @Get('user/:userId')
   @ApiOperation({
     summary: 'Get appointments by user',
