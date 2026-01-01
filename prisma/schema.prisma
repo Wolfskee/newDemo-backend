@@ -39,14 +39,15 @@ enum ItemStatus {
 // User
 // ---------------------------
 model User {
-  id        String        @id @default(uuid())
-  username  String
-  email     String        @unique
-  password  String
-  role      UserRole      @default(CUSTOMER)
-  phone     String?       
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id           String        @id @default(uuid())
+  username     String
+  email        String        @unique
+  password     String
+  role         UserRole      @default(CUSTOMER)
+  phone        String?       
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  refreshToken String?
 
   // Relations
   appointmentsAsCustomer  Appointment[] @relation("CustomerAppointments")

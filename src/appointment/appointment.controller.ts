@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -25,11 +26,13 @@ import {
   AppointmentResponseDto,
   PaginatedAppointmentResponseDto,
 } from './dto/appointment-response.dto';
+import { Public } from 'src/common/decorators';
 
 @Controller('appointment')
 export class AppointmentController {
   constructor(private appointmentService: AppointmentService) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all appointments with pagination' })
   @ApiQuery({
@@ -49,8 +52,8 @@ export class AppointmentController {
     description: 'List of appointments with pagination metadata.',
   })
   async getAllAppointments(
-    @Query('page') page = 1,
-    @Query('limit') limit = 10,
+    @Query('page', new ParseIntPipe()) page: number = 1,
+    @Query('limit', new ParseIntPipe()) limit: number = 10,
   ): Promise<PaginatedAppointmentResponseDto> {
     return this.appointmentService.getAllAppointments(
       Number(page),
@@ -58,6 +61,7 @@ export class AppointmentController {
     );
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get a single appointment by ID' })
   @ApiParam({
@@ -74,6 +78,37 @@ export class AppointmentController {
     @Param('id') id: string,
   ): Promise<AppointmentResponseDto> {
     return this.appointmentService.getAppointmentById(id);
+  }
+
+  @Public()
+  @Get('user/:userId')
+  @ApiOperation({
+    summary: 'Get appointments by user',
+    description:
+      'Get all appointments where the user is either the customer or the employee. Optionally filter by date.',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'ID of the user (customer or employee)',
+    example: 'e9a3f4c1-5f72-4a5e-9c9b-123456789abc',
+  })
+  @ApiQuery({
+    name: 'date',
+    required: false,
+    description:
+      'Filter to get appointments on or after this date (YYYY-MM-DD)',
+    example: '2025-12-20',
+  })
+  @ApiOkResponse({
+    description: 'List of appointments (optionally filtered by date).',
+    type: [AppointmentResponseDto],
+  })
+  async getAppointmentsByUser(
+    @Param('userId') userId: string,
+    @Query('date') date?: string,
+  ): Promise<AppointmentResponseDto[]> {
+    const parsedDate = date ? new Date(date) : undefined;
+    return this.appointmentService.getAppointmentsByUser(userId, parsedDate);
   }
 
   @Post()

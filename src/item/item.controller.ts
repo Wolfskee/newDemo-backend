@@ -22,11 +22,13 @@ import {
   ItemResponseDto,
   PaginatedItemResponseDto,
 } from './dto/item-response.dto';
+import { Public } from 'src/common/decorators';
 
 @Controller('item')
 export class ItemController {
   constructor(private itemService: ItemService) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all items with pagination' })
   @ApiQuery({
@@ -52,6 +54,7 @@ export class ItemController {
     return this.itemService.getAllItems(Number(page), Number(limit));
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get a single item by ID' })
   @ApiParam({

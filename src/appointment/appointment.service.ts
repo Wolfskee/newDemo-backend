@@ -54,6 +54,26 @@ export class AppointmentService {
     return appointment;
   }
 
+  async getAppointmentsByUser(
+    userId: string,
+    startDate?: Date,
+  ): Promise<AppointmentResponseDto[]> {
+    const whereClause: any = {
+      OR: [{ customerId: userId }, { employeeId: userId }],
+    };
+
+    if (startDate) {
+      whereClause.date = { gte: startDate };
+    }
+
+    const appointments = await this.prisma.appointment.findMany({
+      where: whereClause,
+      orderBy: { date: 'desc' },
+    });
+
+    return appointments;
+  }
+
   async createAppointment(
     data: CreateAppointmentDto,
   ): Promise<AppointmentResponseDto> {
