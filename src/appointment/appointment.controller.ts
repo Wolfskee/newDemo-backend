@@ -52,8 +52,8 @@ export class AppointmentController {
     description: 'List of appointments with pagination metadata.',
   })
   async getAllAppointments(
-    @Query('page', new ParseIntPipe()) page: number = 1,
-    @Query('limit', new ParseIntPipe()) limit: number = 10,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
   ): Promise<PaginatedAppointmentResponseDto> {
     return this.appointmentService.getAllAppointments(
       Number(page),
