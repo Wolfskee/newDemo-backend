@@ -3,7 +3,9 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class S3Service {
@@ -17,5 +19,13 @@ export class S3Service {
   async deleteObject(params: DeleteObjectCommand['input']) {
     const command = new DeleteObjectCommand(params);
     return this.s3.send(command);
+  }
+
+  async getPresignedGetUrl(
+    params: GetObjectCommand['input'],
+    expiresIn = 900, // 15 minutes
+  ) {
+    const command = new GetObjectCommand(params);
+    return getSignedUrl(this.s3, command, { expiresIn });
   }
 }

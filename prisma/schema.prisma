@@ -86,7 +86,7 @@ model Item {
   duration    Int?        // in minutes
   category    String
   status                  ItemStatus @default(ACTIVE)
-  imageUrl    String?
+  imageKey    String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
