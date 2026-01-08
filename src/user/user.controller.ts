@@ -4,8 +4,11 @@ import {
   Delete,
   Get,
   Param,
+  Post,
   Put,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -15,17 +18,21 @@ import {
   ApiCreatedResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/user-input.dto';
 import {
   UserResponseDto,
   PaginatedUserResponseDto,
 } from './dto/user-response.dto';
+import { multerImageOptions } from 'src/common/config/multer-image.config';
+import { Public } from 'src/common/decorators';
 
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all users with pagination' })
   @ApiQuery({
@@ -51,6 +58,7 @@ export class UserController {
     return this.userService.getAllUsers(Number(page), Number(limit));
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({
     summary: 'Get single user by ID',
@@ -58,7 +66,6 @@ export class UserController {
   @ApiParam({
     name: 'id',
     description: 'UUID of the user',
-    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiOkResponse({
     type: UserResponseDto,
@@ -74,7 +81,6 @@ export class UserController {
   @ApiParam({
     name: 'id',
     description: 'UUID of the user to update',
-    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiCreatedResponse({
     type: UserResponseDto,
@@ -93,7 +99,6 @@ export class UserController {
   @ApiParam({
     name: 'id',
     description: 'UUID of the user to delete',
-    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @ApiCreatedResponse({
     type: UserResponseDto,
@@ -102,5 +107,27 @@ export class UserController {
   @ApiNotFoundResponse({ description: 'User not found' })
   async deleteUser(@Param('id') id: string): Promise<UserResponseDto> {
     return this.userService.deleteUser(id);
+  }
+
+  @Post('profile-image/:id')
+  @UseInterceptors(FileInterceptor('profileImage', multerImageOptions))
+  @ApiOperation({ summary: 'Get presigned URL for user profile image' })
+  @ApiParam({ name: 'id', description: 'User UUID' })
+  async uploadProfileImageUrl(
+    @Param('id') id: string,
+    @UploadedFile() profileImage: Express.Multer.File,
+  ): Promise<{ url: string }> {
+    const url = await this.userService.uploadUserProfileImage(id, profileImage);
+    return { url };
+  }
+
+  @Delete('profile-image/:id')
+  @ApiOperation({ summary: 'Delete user profile image' })
+  @ApiParam({ name: 'id', description: 'User UUID' })
+  async deleteProfileImage(
+    @Param('id') id: string,
+  ): Promise<{ message: string }> {
+    await this.userService.deleteUserProfileImage(id);
+    return { message: 'Image deleted successfully' };
   }
 }

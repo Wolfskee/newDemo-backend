@@ -115,8 +115,7 @@ export class ItemController {
     return this.itemService.deleteItem(id);
   }
 
-  @Public()
-  @Post(':id/image')
+  @Post('image/:id')
   @UseInterceptors(FileInterceptor('image', multerImageOptions))
   @ApiOperation({ summary: 'Upload/replace image for specific item' })
   @ApiParam({ name: 'id', description: 'Item UUID' })
@@ -128,7 +127,6 @@ export class ItemController {
     return { url };
   }
 
-  @Public()
   @Delete(':id/image')
   @ApiOperation({ summary: 'Delete image for specific item' })
   @ApiParam({ name: 'id', description: 'Item UUID' })
