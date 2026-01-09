@@ -104,7 +104,7 @@ model EmployeeAvailability {
   id          String   @id @default(uuid())
 
   // Date + time range
-  date        DateTime   
+  date        DateTime @db.Date  
   startTime   DateTime
   endTime     DateTime
 

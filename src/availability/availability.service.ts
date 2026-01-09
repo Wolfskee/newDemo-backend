@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAvailabilityDto } from './dto/availability.dto';
 import { EmployeeAvailabilityStatus } from 'src/generated/prisma/enums';
@@ -7,40 +11,20 @@ import { EmployeeAvailabilityStatus } from 'src/generated/prisma/enums';
 export class AvailabilityService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAvailabilityByDateRange(startDate: Date, endDate?: Date) {
-    const whereClause: any = {
-      date: {
-        gte: startDate,
-      },
-    };
-
-    if (endDate) {
-      whereClause.date.lte = endDate;
-    }
-
+  async getAvailabilityByDate(date: Date) {
     return this.prisma.employeeAvailability.findMany({
-      where: whereClause,
+      where: {
+        date,
+      },
     });
   }
 
-  async getAvailabilityByEmployee(
-    employeeId: string,
-    startDate: Date,
-    endDate?: Date,
-  ) {
-    const whereClause: any = {
-      employeeId,
-      date: {
-        gte: startDate,
+  async getAvailabilityByEmployee(employeeId: string, date: Date) {
+    return this.prisma.employeeAvailability.findFirst({
+      where: {
+        employeeId,
+        date,
       },
-    };
-
-    if (endDate) {
-      whereClause.date.lte = endDate;
-    }
-
-    return this.prisma.employeeAvailability.findMany({
-      where: whereClause,
     });
   }
 
@@ -53,9 +37,16 @@ export class AvailabilityService {
       throw new NotFoundException('Employee not found');
     }
 
-    return this.prisma.employeeAvailability.create({
-      data,
-    });
+    try {
+      return await this.prisma.employeeAvailability.create({ data });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        throw new ConflictException(
+          'Availability for this employee and date already exists',
+        );
+      }
+      throw error;
+    }
   }
 
   async assignAvailability(id: string) {

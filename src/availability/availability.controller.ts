@@ -17,57 +17,34 @@ export class AvailabilityController {
   constructor(private readonly availabilityService: AvailabilityService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get availability by date range' })
+  @ApiOperation({ summary: 'Get availability by date' })
   @ApiQuery({
-    name: 'startDate',
+    name: 'date',
     required: true,
-    description: 'Start date (YYYY-MM-DD)',
-    example: '2026-01-12',
+    description: 'date (YYYY-MM-DD)',
   })
-  @ApiQuery({
-    name: 'endDate',
-    required: false,
-    description: 'End date (YYYY-MM-DD)',
-    example: '2026-01-20',
-  })
-  async getAvailability(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate?: string,
-  ) {
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : undefined;
-    return this.availabilityService.getAvailabilityByDateRange(start, end);
+  async getAvailability(@Query('date') date: string) {
+    return this.availabilityService.getAvailabilityByDate(new Date(date));
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get availability by employee and date range' })
+  @ApiOperation({ summary: 'Get availability by employee and date' })
   @ApiParam({
     name: 'id',
     description: 'UUID of the availability to assign',
   })
   @ApiQuery({
-    name: 'startDate',
+    name: 'date',
     required: true,
-    description: 'Start date (YYYY-MM-DD)',
-    example: '2026-01-12',
-  })
-  @ApiQuery({
-    name: 'endDate',
-    required: false,
-    description: 'End date (YYYY-MM-DD)',
-    example: '2026-01-20',
+    description: 'date (YYYY-MM-DD)',
   })
   async getAvailabilityByEmployee(
     @Param('id') employeeId: string,
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate?: string,
+    @Query('date') date: string,
   ) {
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : undefined;
     return this.availabilityService.getAvailabilityByEmployee(
       employeeId,
-      start,
-      end,
+      new Date(date),
     );
   }
 
