@@ -49,14 +49,6 @@ export class CreateItemDto {
   @IsOptional()
   @IsEnum(ItemStatus)
   status?: ItemStatus;
-
-  @ApiPropertyOptional({
-    description: 'URL of the item image',
-    example: 'https://example.com/images/haircut.jpg',
-  })
-  @IsOptional()
-  @IsString()
-  imageUrl?: string;
 }
 
 export class UpdateItemDto {
@@ -108,12 +100,4 @@ export class UpdateItemDto {
   @IsOptional()
   @IsEnum(ItemStatus)
   status?: ItemStatus;
-
-  @ApiPropertyOptional({
-    description: 'URL of the item image',
-    example: 'https://example.com/images/premium-haircut.jpg',
-  })
-  @IsOptional()
-  @IsString()
-  imageUrl?: string;
 }

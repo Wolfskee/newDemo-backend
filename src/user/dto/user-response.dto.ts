@@ -45,6 +45,13 @@ export class UserResponseDto {
     example: '2025-12-07T16:45:23.000Z',
   })
   updatedAt: Date;
+
+  @ApiProperty({
+    description: 'Presigned URL for the user profile image',
+    example: 'https://example.com',
+    nullable: true,
+  })
+  profileImageUrl?: string | null;
 }
 
 export class PaginatedUserResponseDto {

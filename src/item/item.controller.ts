@@ -7,6 +7,8 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -16,6 +18,7 @@ import {
   ApiCreatedResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ItemService } from './item.service';
 import { CreateItemDto, UpdateItemDto } from './dto/item-input.dto';
 import {
@@ -23,6 +26,7 @@ import {
   PaginatedItemResponseDto,
 } from './dto/item-response.dto';
 import { Public } from 'src/common/decorators';
+import { multerImageOptions } from 'src/common/config/multer-image.config';
 
 @Controller('item')
 export class ItemController {
@@ -34,13 +38,11 @@ export class ItemController {
   @ApiQuery({
     name: 'page',
     required: false,
-    example: 1,
     description: 'Page number to retrieve (default = 1)',
   })
   @ApiQuery({
     name: 'limit',
     required: false,
-    example: 10,
     description: 'Number of items per page (default = 10)',
   })
   @ApiOkResponse({
@@ -60,7 +62,6 @@ export class ItemController {
   @ApiParam({
     name: 'id',
     description: 'UUID of the item',
-    example: 'b123fabc-5678-4bde-9a11-9876543210ab',
   })
   @ApiOkResponse({
     type: ItemResponseDto,
@@ -86,7 +87,6 @@ export class ItemController {
   @ApiParam({
     name: 'id',
     description: 'UUID of the item to update',
-    example: 'a456fdef-7890-4c32-abc1-543210fedcba',
   })
   @ApiCreatedResponse({
     type: ItemResponseDto,
@@ -105,7 +105,6 @@ export class ItemController {
   @ApiParam({
     name: 'id',
     description: 'UUID of the item to delete',
-    example: 'c654fdef-1234-4e98-bc12-111111111111',
   })
   @ApiCreatedResponse({
     type: ItemResponseDto,
@@ -114,5 +113,27 @@ export class ItemController {
   @ApiNotFoundResponse({ description: 'Item not found' })
   async deleteItem(@Param('id') id: string): Promise<ItemResponseDto> {
     return this.itemService.deleteItem(id);
+  }
+
+  @Post('image/:id')
+  @UseInterceptors(FileInterceptor('image', multerImageOptions))
+  @ApiOperation({ summary: 'Upload/replace image for specific item' })
+  @ApiParam({ name: 'id', description: 'Item UUID' })
+  async uploadItemImage(
+    @Param('id') itemId: string,
+    @UploadedFile() image: Express.Multer.File,
+  ): Promise<{ url: string }> {
+    const url = await this.itemService.uploadItemImage(itemId, image);
+    return { url };
+  }
+
+  @Delete(':id/image')
+  @ApiOperation({ summary: 'Delete image for specific item' })
+  @ApiParam({ name: 'id', description: 'Item UUID' })
+  async deleteItemImage(
+    @Param('id') itemId: string,
+  ): Promise<{ message: string }> {
+    await this.itemService.deleteItemImage(itemId);
+    return { message: 'Image deleted successfully' };
   }
 }
