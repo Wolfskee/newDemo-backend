@@ -4,7 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateAvailabilityDto } from './dto/availability.dto';
+import {
+  CreateAvailabilityDto,
+  UpdateAvailabilityDto,
+} from './dto/availability.dto';
 import { EmployeeAvailabilityStatus } from 'src/generated/prisma/enums';
 
 @Injectable()
@@ -39,6 +42,34 @@ export class AvailabilityService {
 
     try {
       return await this.prisma.employeeAvailability.create({ data });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        throw new ConflictException(
+          'Availability for this employee and date already exists',
+        );
+      }
+      throw error;
+    }
+  }
+
+  async updateAvailability(id: string, data: UpdateAvailabilityDto) {
+    const availability = await this.prisma.employeeAvailability.findUnique({
+      where: { id },
+    });
+
+    if (!availability) {
+      throw new NotFoundException('Employee Availability not found');
+    }
+
+    try {
+      const updatedAvailability = await this.prisma.employeeAvailability.update(
+        {
+          where: { id },
+          data,
+        },
+      );
+
+      return updatedAvailability;
     } catch (error) {
       if (error.code === 'P2002') {
         throw new ConflictException(

@@ -10,7 +10,10 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { AvailabilityService } from './availability.service';
-import { CreateAvailabilityDto } from './dto/availability.dto';
+import {
+  CreateAvailabilityDto,
+  UpdateAvailabilityDto,
+} from './dto/availability.dto';
 
 @Controller('availability')
 export class AvailabilityController {
@@ -52,6 +55,19 @@ export class AvailabilityController {
   @ApiOperation({ summary: 'Create new availability' })
   async createAvailability(@Body() data: CreateAvailabilityDto) {
     return this.availabilityService.createAvailability(data);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update an existing availability' })
+  @ApiParam({
+    name: 'id',
+    description: 'UUID of the availability to update',
+  })
+  async updateAvailability(
+    @Param('id') id: string,
+    @Body() data: UpdateAvailabilityDto,
+  ) {
+    return this.availabilityService.updateAvailability(id, data);
   }
 
   @Put('assign/:id')
