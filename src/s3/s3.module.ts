@@ -12,28 +12,30 @@ import { S3Service } from './s3.service';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const region = config.getOrThrow<string>('AWS_REGION');
-        const accessKeyId = config.getOrThrow<string>('AWS_ACCESS_KEY_ID');
-        const secretAccessKey = config.getOrThrow<string>(
-          'AWS_SECRET_ACCESS_KEY',
-        );
         const endpoint = config.get<string>('AWS_S3_ENDPOINT');
+        const accessKeyId = config.get<string>('AWS_ACCESS_KEY_ID');
+        const secretAccessKey = config.get<string>('AWS_SECRET_ACCESS_KEY');
 
-        const baseConfig: any = {
+        const s3Config: any = {
           region,
-          credentials: { accessKeyId, secretAccessKey },
         };
 
-        // If endpoint is set, assume LocalStack
+        // 只有当 endpoint 存在且不为空时，才设置 endpoint（LocalStack）
         if (endpoint) {
-          return new S3Client({
-            ...baseConfig,
-            endpoint,
-            forcePathStyle: true,
-          });
+          s3Config.endpoint = endpoint;
+          s3Config.forcePathStyle = true;
         }
 
-        // No endpoint => real AWS S3
-        return new S3Client(baseConfig);
+        // 只有当 accessKeyId 和 secretAccessKey 都存在时，才设置 credentials
+        // 生产环境 EC2 会自动通过 IAM Role 获取，不需要显式设置 credentials
+        if (accessKeyId && secretAccessKey) {
+          s3Config.credentials = {
+            accessKeyId,
+            secretAccessKey,
+          };
+        }
+
+        return new S3Client(s3Config);
       },
     },
     S3Service,
