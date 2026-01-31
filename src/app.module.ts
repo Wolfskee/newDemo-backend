@@ -7,6 +7,8 @@ import { ItemModule } from './item/item.module';
 import { AppointmentModule } from './appointment/appointment.module';
 import { AuthModule } from './auth/auth.module';
 import { AccessTokenGuard } from './common/guards';
+import { S3Module } from './s3/s3.module';
+import { AvailabilityModule } from './availability/availability.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { AccessTokenGuard } from './common/guards';
     ItemModule,
     AppointmentModule,
     AuthModule,
+    S3Module,
+    AvailabilityModule,
   ],
   providers: [
     {

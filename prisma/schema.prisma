@@ -35,23 +35,32 @@ enum ItemStatus {
   INACTIVE
 }
 
+enum EmployeeAvailabilityStatus {
+  OPEN
+  ASSIGNED
+  CANCELLED
+}
+
+
 // ---------------------------
 // User
 // ---------------------------
 model User {
-  id           String        @id @default(uuid())
-  username     String
-  email        String        @unique
-  password     String
-  role         UserRole      @default(CUSTOMER)
-  phone        String?       
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  refreshToken String?
+  id              String        @id @default(uuid())
+  username        String
+  email           String        @unique
+  password        String
+  role            UserRole      @default(CUSTOMER)
+  phone           String?       
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  refreshToken    String?
+  profileImageKey String?
 
   // Relations
   appointmentsAsCustomer  Appointment[] @relation("CustomerAppointments")
   appointmentsAsEmployee  Appointment[] @relation("EmployeeAppointments")
+  employeeAvailabilities  EmployeeAvailability[]
 }
 
 // ---------------------------
@@ -86,7 +95,27 @@ model Item {
   duration    Int?        // in minutes
   category    String
   status                  ItemStatus @default(ACTIVE)
-  imageUrl    String?
+  imageKey    String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+}
+
+model EmployeeAvailability {
+  id          String   @id @default(uuid())
+
+  // Date + time range
+  date        DateTime @db.Date  
+  startTime   DateTime
+  endTime     DateTime
+
+  status      EmployeeAvailabilityStatus @default(OPEN)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  employeeId  String
+  employee    User     @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, date])
 }

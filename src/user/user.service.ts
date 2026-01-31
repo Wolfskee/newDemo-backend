@@ -4,17 +4,26 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { hash } from 'bcrypt';
-
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto } from './dto/user-input.dto';
 import {
   UserResponseDto,
   PaginatedUserResponseDto,
 } from './dto/user-response.dto';
+import { S3Service } from 'src/s3/s3.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  private readonly bucket: string;
+
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+    private readonly s3Service: S3Service,
+  ) {
+    this.bucket = this.configService.getOrThrow<string>('AWS_S3_BUCKET_NAME');
+  }
 
   async getAllUsers(
     page: number,
@@ -30,10 +39,23 @@ export class UserService {
       omit: { password: true, refreshToken: true },
     });
 
+    const usersWithProfileImageUrls = await Promise.all(
+      users.map(async (user) => {
+        const { profileImageKey, ...rest } = user;
+        if (profileImageKey) {
+          rest['profileImageUrl'] = await this.s3Service.getPresignedGetUrl({
+            Bucket: this.bucket,
+            Key: profileImageKey,
+          });
+        }
+        return rest;
+      }),
+    );
+
     const totalPages = Math.ceil(total / limit);
 
     return {
-      users,
+      users: usersWithProfileImageUrls,
       total,
       totalPages,
       currentPage: page,
@@ -53,7 +75,15 @@ export class UserService {
 
     if (!user) throw new NotFoundException(`User with ID ${id} not found`);
 
-    return user;
+    const { profileImageKey, ...rest } = user;
+    if (profileImageKey) {
+      rest['profileImageUrl'] = await this.s3Service.getPresignedGetUrl({
+        Bucket: this.bucket,
+        Key: profileImageKey,
+      });
+    }
+
+    return rest;
   }
 
   async createUser(data: CreateUserDto): Promise<UserResponseDto> {
@@ -157,5 +187,78 @@ export class UserService {
         refreshToken: null,
       },
     });
+  }
+
+  async uploadUserProfileImage(
+    userId: string,
+    image: Express.Multer.File,
+  ): Promise<string> {
+    const user = await this.getUserWithProfileImageKeyById(userId);
+
+    if (!image || !image.buffer) {
+      throw new NotFoundException('Invalid image file');
+    }
+
+    // delete old image if exists
+    if (user.profileImageKey) {
+      await this.deleteUserProfileImage(user.id);
+    }
+
+    const timestamp = Date.now();
+    const ext = image.originalname.split('.').pop()?.toLowerCase() || 'jpg';
+    const filename = `img-${timestamp}.${ext}`;
+    const key = `users/${user.id}/profile/${filename}`;
+
+    // upload file to S3
+    await this.s3Service.putObject({
+      Bucket: this.bucket,
+      Key: key,
+      Body: image.buffer,
+      ContentType: image.mimetype,
+    });
+
+    // store only the key in DB
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { profileImageKey: key },
+    });
+
+    // generate presigned GET URL for frontend to use
+    const imageUrl = await this.s3Service.getPresignedGetUrl({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    return imageUrl;
+  }
+
+  async deleteUserProfileImage(userId: string): Promise<void> {
+    const user = await this.getUserWithProfileImageKeyById(userId);
+
+    if (!user.profileImageKey) return;
+
+    await this.s3Service.deleteObject({
+      Bucket: this.bucket,
+      Key: user.profileImageKey,
+    });
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { profileImageKey: null },
+    });
+  }
+
+  async getUserWithProfileImageKeyById(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      omit: {
+        password: true,
+        refreshToken: true,
+      },
+    });
+
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+
+    return user;
   }
 }
